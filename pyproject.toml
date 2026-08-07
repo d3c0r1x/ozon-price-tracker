@@ -1,0 +1,9 @@
+[project]
+name = "ozon-price-tracker"
+version = "1.0.0"
+description = "Отслеживание цен и остатков Ozon в Telegram: алерты на падение цены и возврат в наличие"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
