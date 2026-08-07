@@ -60,18 +60,18 @@ product_cache = TTLCache(ttl_seconds=config.CACHE_TTL_SECONDS)
 @router.message(CommandStart())
 async def cmd_start(message: Message) -> None:
     await message.answer(
-        "Привет! Я бот <b>Ozon Price &amp; Stock Tracker</b>.\\n\\n"
-        "Команды:\\n"
-        "• /track <b>ССЫЛКА или ID</b> — отслеживать товар Ozon\\n"
-        "• /list — мои товары\\n"
-        "• /untrack <b>ID</b> — удалить из отслеживания\\n"
-        "• /history <b>ID</b> — история цен\\n"
-        "• /alert <b>ID ЦЕНА</b> — уведомить, когда цена опустится до N ₽\\n"
-        "• /delalert <b>ID</b> — удалить порог\\n"
-        "• /check — проверить цены прямо сейчас\\n"
-        "• /diag — диагностика доступа к API Ozon\\n"
-        "• /stats — сводка по базе\\n"
-        "• /cleanup <b>ДНИ</b> — очистить историю старше N дней (админ)\\n\\n"
+        "Привет! Я бот <b>Ozon Price &amp; Stock Tracker</b>.\n\n"
+        "Команды:\n"
+        "• /track <b>ССЫЛКА или ID</b> — отслеживать товар Ozon\n"
+        "• /list — мои товары\n"
+        "• /untrack <b>ID</b> — удалить из отслеживания\n"
+        "• /history <b>ID</b> — история цен\n"
+        "• /alert <b>ID ЦЕНА</b> — уведомить, когда цена опустится до N ₽\n"
+        "• /delalert <b>ID</b> — удалить порог\n"
+        "• /check — проверить цены прямо сейчас\n"
+        "• /diag — диагностика доступа к API Ozon\n"
+        "• /stats — сводка по базе\n"
+        "• /cleanup <b>ДНИ</b> — очистить историю старше N дней (админ)\n\n"
         "Бот периодически проверяет цены и пришлёт уведомление, если цена упала, "
         "выросла, товар снова в наличии, заканчивается или достигнут порог."
     )
@@ -97,11 +97,11 @@ async def cmd_track(message: Message) -> None:
     old_price = int(product.get("old_price") or 0)
     price_txt = f"<s>{old_price} ₽</s> <b>{price} ₽</b>" if old_price else f"<b>{price} ₽</b>"
     await message.answer(
-        "✅ Товар добавлен в отслеживание:\\n"
-        f"<b>{_html.escape(str(product.get('title')), quote=False)}</b>\\n"
-        f"ID: <code>{ozon_id}</code>\\n"
-        f"Цена: {price_txt}\\n"
-        f"Остаток: {product.get('stock', 0)} шт.\\n"
+        "✅ Товар добавлен в отслеживание:\n"
+        f"<b>{_html.escape(str(product.get('title')), quote=False)}</b>\n"
+        f"ID: <code>{ozon_id}</code>\n"
+        f"Цена: {price_txt}\n"
+        f"Остаток: {product.get('stock', 0)} шт.\n"
         f"Рейтинг: {product.get('rating') or '—'}"
     )
 
@@ -126,7 +126,7 @@ async def cmd_list(message: Message) -> None:
             f"• <code>{i['ozon_id']}</code> — {_html.escape(i['title'][:40], quote=False)}: "
             f"<b>{price} ₽</b>, {stock_txt}"
         )
-    await message.answer("📦 <b>Отслеживаемые товары:</b>\\n" + "\\n".join(lines))
+    await message.answer("📦 <b>Отслеживаемые товары:</b>\n" + "\n".join(lines))
 
 
 @router.message(Command("untrack"))
@@ -157,7 +157,7 @@ async def cmd_history(message: Message) -> None:
         + (f", остаток {r['stock']} шт." if r["stock"] else ", нет в наличии")
         for r in rows
     ]
-    await message.answer(f"📈 <b>История цен</b> (ID <code>{ozon_id}</code>):\\n" + "\\n".join(lines))
+    await message.answer(f"📈 <b>История цен</b> (ID <code>{ozon_id}</code>):\n" + "\n".join(lines))
 
 
 @router.message(Command("alert"))
@@ -215,8 +215,8 @@ async def cmd_check(message: Message) -> None:
         if notify:
             await db.update_last_notified(ozon_id, int(product["price"] or 0), int(product["stock"] or 0))
             await message.answer(
-                f"<b>{_html.escape(str(product['title'])[:60], quote=False)}</b>\\n"
-                + "\\n".join(msgs)
+                f"<b>{_html.escape(str(product['title'])[:60], quote=False)}</b>\n"
+                + "\n".join(msgs)
             )
             changed += 1
     await message.answer(f"Проверка завершена. Изменений: {changed}.")
@@ -226,18 +226,18 @@ async def cmd_check(message: Message) -> None:
 async def cmd_diag(message: Message) -> None:
     results = await ozon.diagnose()
     lines = [f"• <b>{name}</b>: {status}" for name, status in results]
-    await message.answer("🩺 <b>Диагностика Ozon:</b>\\n" + "\\n".join(lines))
+    await message.answer("🩺 <b>Диагностика Ozon:</b>\n" + "\n".join(lines))
 
 
 @router.message(Command("stats"))
 async def cmd_stats(message: Message) -> None:
     s = await db.stats()
     await message.answer(
-        "📊 <b>Сводка по базе:</b>\\n"
-        f"• Товаров: {s['items']}\\n"
-        f"• Подписок: {s['tracked']}\\n"
-        f"• Записей истории: {s['history']}\\n"
-        f"• Порогов: {s['thresholds']}\\n"
+        "📊 <b>Сводка по базе:</b>\n"
+        f"• Товаров: {s['items']}\n"
+        f"• Подписок: {s['tracked']}\n"
+        f"• Записей истории: {s['history']}\n"
+        f"• Порогов: {s['thresholds']}\n"
         f"• Пользователей: {s['users']}"
     )
 
@@ -287,8 +287,8 @@ async def scheduled_check() -> None:
                 try:
                     await bot.send_message(
                         user_id,
-                        f"<b>{_html.escape(str(product['title'])[:60], quote=False)}</b>\\n"
-                        + "\\n".join(msgs),
+                        f"<b>{_html.escape(str(product['title'])[:60], quote=False)}</b>\n"
+                        + "\n".join(msgs),
                         parse_mode=ParseMode.HTML,
                     )
                 except Exception as exc:
