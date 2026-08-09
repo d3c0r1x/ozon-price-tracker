@@ -146,13 +146,23 @@ class Database:
 
     # ------------------------------------------------------------- трекинг
 
-    async def track(self, user_id: int, ozon_id: int) -> None:
+    async def track(self, user_id: int, ozon_id: int) -> bool:
+        """Добавляет товар в отслеживание; False — если уже отслеживался."""
         async with aiosqlite.connect(self.path) as db:
-            await db.execute(
+            cur = await db.execute(
                 "INSERT OR IGNORE INTO tracked (user_id, ozon_id) VALUES (?, ?)",
                 (user_id, ozon_id),
             )
             await db.commit()
+            return cur.rowcount > 0
+
+    async def is_tracked(self, user_id: int, ozon_id: int) -> bool:
+        async with aiosqlite.connect(self.path) as db:
+            cur = await db.execute(
+                "SELECT 1 FROM tracked WHERE user_id = ? AND ozon_id = ? LIMIT 1",
+                (user_id, ozon_id),
+            )
+            return await cur.fetchone() is not None
 
     async def untrack(self, user_id: int, ozon_id: int) -> bool:
         async with aiosqlite.connect(self.path) as db:

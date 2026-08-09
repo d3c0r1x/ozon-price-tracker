@@ -83,6 +83,9 @@ async def cmd_track(message: Message) -> None:
     if ozon_id is None:
         await message.answer("Формат: /track ССЫЛКА_ИЛИ_ID (например, /track 1500516648)")
         return
+    if await db.is_tracked(message.from_user.id, ozon_id):
+        await message.answer(f"ℹ️ Товар <code>{ozon_id}</code> уже в вашем списке. /list")
+        return
     try:
         product = await product_cache.get_or_set(ozon_id, lambda: _fetch_product(ozon_id))
     except Exception as exc:  # сеть, антибот и т.п.

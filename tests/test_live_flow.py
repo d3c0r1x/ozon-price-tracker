@@ -145,6 +145,12 @@ def test_track_list_alert_history_flow(tmp_path) -> None:
         assert any(f"{mock_product['price']} ₽" in t for t in track)      # цена из mock
         assert any(f"Остаток: {mock_product['stock']} шт." in t for t in track)
 
+        # повторный /track того же товара — «уже в вашем списке»
+        session.calls.clear()
+        await dp.feed_update(bot, _msg_update(f"/track {OZON_ID}", mid := mid + 1, upd := upd + 1))
+        dup = _send_texts(session)
+        assert any("уже в вашем списке" in t for t in dup)
+
         # /list — товар в списке
         session.calls.clear()
         await dp.feed_update(bot, _msg_update("/list", mid := mid + 1, upd := upd + 1))

@@ -31,7 +31,8 @@ def test_db_roundtrip(tmp_path) -> None:
         db = Database(str(tmp_path / "tracker.db"))
         await db.init()
         await db.upsert_item(_product())
-        await db.track(111, OZON_ID)
+        assert await db.track(111, OZON_ID) is True
+        assert await db.track(111, OZON_ID) is False   # повторный трекинг — уже был
         assert await db.list_tracked(111)
         assert await db.history(OZON_ID)
         assert await db.users_for_product(OZON_ID) == [111]
