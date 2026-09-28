@@ -178,7 +178,7 @@ class Database:
             db.row_factory = aiosqlite.Row
             cur = await db.execute(
                 """
-                SELECT i.ozon_id, i.title, i.price, i.old_price, i.stock, i.rating
+                SELECT i.ozon_id, i.title, i.price, i.old_price, i.stock, i.rating, i.last_price
                 FROM tracked t JOIN items i ON i.ozon_id = t.ozon_id
                 WHERE t.user_id = ?
                 ORDER BY i.created_at DESC

@@ -83,6 +83,7 @@ async def cmd_track(message: Message) -> None:
     if ozon_id is None:
         await message.answer("Формат: /track ССЫЛКА_ИЛИ_ID (например, /track 1500516648)")
         return
+
     if await db.is_tracked(message.from_user.id, ozon_id):
         await message.answer(f"ℹ️ Товар <code>{ozon_id}</code> уже в вашем списке. /list")
         return
@@ -125,9 +126,15 @@ async def cmd_list(message: Message) -> None:
         price = i["price"] or 0
         stock = i["stock"] or 0
         stock_txt = "нет в наличии" if stock == 0 else f"остаток {stock} шт."
+        delta = ""
+        if i.get("last_price") and i["last_price"] != price:
+            diff = price - i["last_price"]
+            arrow = "📈" if diff > 0 else "📉"
+            delta = f" {arrow} {diff:+d} ₽ с прошлой проверки"
         lines.append(
-            f"• <code>{i['ozon_id']}</code> — {_html.escape(i['title'][:40], quote=False)}: "
-            f"<b>{price} ₽</b>, {stock_txt}"
+            f"• <a href=\"https://www.ozon.ru/product/{i['ozon_id']}/\">"
+            f"{_html.escape(i['title'][:40], quote=False)}</a>: "
+            f"<b>{price} ₽</b>, {stock_txt}{delta}"
         )
     await message.answer("📦 <b>Отслеживаемые товары:</b>\n" + "\n".join(lines))
 
