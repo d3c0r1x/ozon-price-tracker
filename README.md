@@ -1,96 +1,20 @@
 # Ozon Price & Stock Tracker
 
-[![CI](https://github.com/d3c0r1x/ozon-price-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/d3c0r1x/ozon-price-tracker/actions/workflows/ci.yml)
+> **Prototype / supporting project.** This pattern was later reused in the broader [Ozon Seller Bot](https://github.com/d3c0r1x/ozon-seller-bot) and [Smart Shopper](https://github.com/d3c0r1x/smart-shopper) projects.
 
-Telegram-бот для отслеживания цен и остатков товаров на Ozon. Пользователь отправляет ссылку на товар или его ID, бот сохраняет карточку, периодически проверяет цену и остаток и уведомляет об изменениях: цена упала или выросла, достигнут персональный порог, товар снова в наличии или заканчивается.
+Telegram bot for monitoring Ozon product prices and stock.
 
-## 🕹 Живое демо
+## What it demonstrates
 
-Онлайн-демо не опубликовано: поллинг Telegram требует постоянно работающего процесса. Локальный запуск — `start.bat` (см. раздел «Запуск»); витрина всех проектов — [d3c0r1x.github.io](https://d3c0r1x.github.io).
+- scheduled polling;
+- price/stock change detection;
+- personal price thresholds;
+- notification cooldowns;
+- SQLite persistence;
+- retry and graceful handling of temporary marketplace failures.
 
-## Возможности
+## Stack
 
-- **/track** — отслеживание товара по ссылке (`https://www.ozon.ru/product/...`) или голому ID;
-- **/list**, **/untrack** — управление списком отслеживаемых товаров;
-- **/history** — история изменения цены и остатка;
-- **/alert** — персональный порог: уведомление, когда цена опустится до указанной суммы;
-- **/check** — принудительная проверка всех товаров;
-- **/diag** — диагностика доступности публичного API Ozon;
-- **/stats**, **/cleanup** — сводка по базе и плановая очистка истории (только для администраторов);
-- периодическая проверка цен по расписанию (по умолчанию раз в 6 часов) с уведомлениями;
-- кулдаун уведомлений по одному товару (по умолчанию 6 часов) — защита от спама;
-- TTL-кэш карточек товаров и индексы SQLite — быстрые повторные запросы и контролируемый рост базы;
-- повторный **/track** уже отслеживаемого товара не плодит дубликаты — бот сообщает, что товар в списке.
+Python · aiogram · Ozon API · SQLite · APScheduler · pytest · GitHub Actions
 
-## Команды
-
-| Команда | Описание |
-|---|---|
-| `/start` | Справка |
-| `/track ССЫЛКА_ИЛИ_ID` | Начать отслеживание товара |
-| `/list` | Список отслеживаемых товаров |
-| `/untrack ID` | Удалить товар из отслеживания |
-| `/history ID` | История цен |
-| `/alert ID ЦЕНА` | Уведомить при достижении цены |
-| `/delalert ID` | Удалить порог |
-| `/check` | Проверить цены немедленно |
-| `/diag` | Диагностика API Ozon |
-| `/stats` | Сводка по базе |
-| `/cleanup ДНИ` | Очистить историю старше N дней |
-
-## Структура
-
-```
-ozon-price-tracker/
-├── bot.py            # точка входа: команды, планировщик, рассылка уведомлений
-├── config.py         # настройки через переменные окружения
-├── ozon_api.py       # клиент composer-api: парсинг ссылок, транспорты, парсер widgetStates, демо-режим
-├── db.py             # SQLite (aiosqlite): товары, подписки, пороги, история
-├── alerts.py         # чистая логика уведомлений (падение цены, наличие, порог, кулдаун)
-├── middlewares.py    # троттлинг и логирование (aiogram)
-├── utils.py          # TTL-кэш и retry с экспоненциальным backoff (stdlib)
-├── tests/            # pytest: парсеры, БД, логика алертов, устойчивость к блокировкам
-├── Dockerfile, pyproject.toml, CI
-└── start.bat     # запуск на Windows: токен из корневого .env, демо-режим
-```
-
-## Установка и запуск
-
-```bash
-pip install -r requirements.txt
-export OZON_BOT_TOKEN=123456:ABC...   # токен от @BotFather
-export OZON_DEMO_MODE=1               # 1 — демо-данные, 0 — реальный API
-python bot.py
-```
-
-На Windows: `start.bat` самостоятельно читает `TG_TOKEN` из корневого `.env` и запускает бота из `.venv`.
-
-## Переменные окружения
-
-Полный список — в `.env.example`. Основные:
-
-| Переменная | Значение по умолчанию | Назначение |
-|---|---|---|
-| `OZON_BOT_TOKEN` | — | Токен бота (обязательно) |
-| `OZON_DEMO_MODE` | `0` | `1` — выдуманные данные без сети |
-| `OZON_HTTP_CLIENT` | `curl_cffi` | Транспорт: `curl_cffi` / `httpx` |
-| `OZON_PROXY` | — | Прокси для запросов к Ozon |
-| `OZON_CHECK_INTERVAL_MINUTES` | `360` | Периодичность проверки цен |
-| `OZON_ALERT_COOLDOWN_HOURS` | `6` | Кулдаун уведомлений по товару |
-| `OZON_HISTORY_KEEP_DAYS` | `30` | Срок хранения истории цен |
-| `OZON_LOW_STOCK_THRESHOLD` | `5` | Порог «товар заканчивается» |
-| `OZON_ADMIN_IDS` | — | ID администраторов для `/cleanup` |
-
-## Технические особенности
-
-1. **Публичный API Ozon** (`www.ozon.ru/api/composer-api.bx/page/json/v2`) — недокументированный и защищённый антиботом. При прямой проверке (2026-08-08) без валидного region-cookie он возвращает HTTP 307 — редирект-петлю антибота (`&__rr=N` растёт до бесконечности). Клиент детектирует 307 и не выполняет бессмысленные повторы; для реальных данных необходим `OZON_PROXY` с прогретым регионом либо демо-режим.
-2. **Ответ composer-api** — словарь `widgetStates`, где каждый виджет является JSON-строкой. Парсер ищет карточку в виджетах `webProductPage` устойчиво к изменению структуры: цена может быть строкой рублей (`"6990.00"`), числом в копейках (`699000`) или вложенным объектом `{"value": ...}` — все варианты нормализуются в целые рубли.
-3. **Транспорт curl_cffi** — имитация TLS/HTTP2-отпечатка Chrome для прохождения edge-фильтра по отпечатку; при недоступности библиотеки автоматический fallback на `httpx`.
-4. **Логика уведомлений вынесена в чистую функцию** `should_notify()` — покрыта unit-тестами: падение цены, возврат в наличие (частый сценарий Ozon), достижение порога, «заканчивается», кулдаун и корректная обработка битых дат.
-
-## Планы развития
-
-- поддержка нескольких регионов доставки (параметр региона Ozon);
-- отслеживание изменения рейтинга и количества отзывов;
-- агрегация динамики цен в виде графика (matplotlib);
-- интеграция с официальным Seller API Ozon для мониторинга собственных товаров.
+The repository remains public as a focused example of marketplace monitoring logic.
