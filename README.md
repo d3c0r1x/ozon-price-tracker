@@ -1,5 +1,7 @@
 # Ozon Price & Stock Tracker
 
+[![CI](https://github.com/d3c0r1x/ozon-price-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/d3c0r1x/ozon-price-tracker/actions/workflows/ci.yml)
+
 Telegram-бот для отслеживания цен и остатков товаров на Ozon. Пользователь отправляет ссылку на товар или его ID, бот сохраняет карточку, периодически проверяет цену и остаток и уведомляет об изменениях: цена упала или выросла, достигнут персональный порог, товар снова в наличии или заканчивается.
 
 ## 🕹 Живое демо
